@@ -1,6 +1,9 @@
 #source chatenv/bin/activate
 #python -m streamlit run chat.py
 
+#ollama muss laufen
+
+
 import streamlit as st  # ð data web app development
 import time
 import sys
@@ -10,6 +13,16 @@ from llama_index.llms import Ollama
 #All of your local models are automatically served on localhost:11434
 
 #Select your model when setting llm = Ollama(…, model=”:”)
+llm = Ollama(model="mistral", request_timeout=400.0) #gibt die möglichkeit mehrere zu laden
+
+#TODO
+#try mistral:instruct
+#instruct is a finetuned model for chat
+
+#fix #avatar bug!
+
+#fix greeting bug!
+
 # App title
 st.set_page_config(page_title="Vickys Chatbot")
 
@@ -20,35 +33,35 @@ st.title('💬 Vickys Chatbot')
 
 
 characters = {
-    "feind": "You are a very annoying 'feind', you are only the 'feind' and only answer as the 'feind'. you speak only german and will not respon if the 'user' ask in another lanuage and you are in generaly not very helpful. You don't like the 'user' and your response should make this clear. You do not respond as 'user' or pretend to be 'user'.  You always respond only in German. Don't forget to be really mean to the 'user' - you are the 'freind' and you hate him! You only respond once as 'feind'.",
-    "freund": "You are the funny 'freund' you answer questions only in short german sentences as the 'freund' . Your mission is to bring a smile to their faces and add some laughter to their day. Remember, you're the 'freund', not the user. You do not respond as 'user' or pretend to be 'user'. You always respond only as the 'freund' and in German. You are the 'freund'.",
-  #  "trainer": "You are the Pushing and Motivating 'trainer' you answer questions in german as the 'trainer'. Your goal is to inspire and encourage 'user' to achieve their best. Give always advices and ideas a good trainer would give, you're the 'trainer', not the user. You do not respond as 'user' or pretend to be 'user'. You always respond only in German and as the 'trainer'."
-    "trainer": "You are the 'trainer' Always answer a question with another question to specify the question. Your goal is to find out what the person wants, you should never answer a question, but always ask a question based on the question you where asked. Remember, you're the 'trainer', not the user. You do not respond as 'user' or pretend to be 'user'. You are the trainer"}
-
+    "feind": "Du bist ein sehr nerviger 'feind', du bist nur der 'feind' und antwortest nur als 'feind'. Du sprichst nur deutsch und antwortest nicht, wenn der 'user' in einer anderen Sprache fragen stellt. Generell bist du nicht sehr hilfreich. Du findest den 'user' blöd und deine Antwort sollte dies deutlich machen. Du antwortest nicht als 'user' oder gibst vor, 'user' zu sein. Du antwortest immer nur auf Deutsch. Vergiss nicht, dem 'user' gegenüber richtig gemein zu sein - Du bist der 'feind' und magst den 'user' nicht! Du antwortest nur einmal als 'feind'.", 
+    "freund": "Du bist der lustige 'freund', du beantwortest Fragen nur in kurzen deutschen Sätzen als 'freund'. Deine Aufgabe ist es, den Nutzern ein Lächeln ins Gesicht zu zaubern und ihren Tag zum Lachen zu bringen. Denke daran, dass du der 'freund' bist und nicht der 'user'. Reagiere nicht als 'user' und gebe niemals vor, 'user' zu sein. Sie antworten immer nur als 'freund' und auf Deutsch. Du bist der 'freund'.",
+    "fragefuchs" : "Du bist der 'fragefuchs'. Beantworte Frage immer mit einer weiteren Frage, um die Frage zu präzisieren. Dein Ziel ist es, herauszufinden, was der 'user' möchte. Sie sollten niemals eine Frage beantworten, sondern immer eine Frage auf Deutsch stellen, die auf der Frage basiert, die Ihnen gestellt wurde. Denke daran, dass du der 'fragefuchs' bist, nicht der  'user' . Reagieren  nicht als  'user'  und  geben  niemals vor,  'user'  zu sein. Du bist der 'fragefuchs'. "}
+    
+    
 character_greetings = {
     "freund": "Hey, ich bin dein lustiger Freund! Lass uns zusammen eine gute Zeit haben.",
-    "trainer": "Willkommen! Ich bin dein motivierender Trainer. Lass uns gemeinsam Großes erreichen!",
+    "fragefuchs": "Hallo! Stell mir eine Frage ich beantworte sie bestimmt!",
     "feind": "Was willst du?"
 }
 
 character_avatar = {
     "freund": "😘",
-    "trainer": "🏋",
+    "fragefuchs": "🦊",
     "feind": "💩"
 }
 characters_labels = {
     "feind": "Feind",
     "freund": "Freund",
-    "trainer": "Trainer"}
+    "fragefuchs": "Fragefuchs"}
+
 # Define a variable to store the selected option
 with st.form(key='my_form'):
 	character = st.selectbox(
             'Mit wem willst du sprechen?',
-            ["feind" , "freund" , "trainer"], placeholder="Gesprächspartner...", format_func= lambda x: characters_labels[x]) #format_func
+            ["feind" , "freund" , "fragefuchs"], placeholder="Gesprächspartner...", format_func= lambda x: characters_labels[x]) #format_func
 	submit = st.form_submit_button(label='Auswählen')
     
 
-llm = Ollama(model="mistral", request_timeout=300.0) #gibt die möglichkeit mehrere zu laden
 
 # Store LLM generated responses
 #if "messages" not in st.session_state.keys() and submit:
@@ -91,7 +104,8 @@ def generate_vickys_response(prompt_input, character):
 
 # User-provided prompt
 if prompt := st.chat_input():  
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.session_state.messages.append({"role": "user", "content": prompt}) #how to remember avatar
+   # st.session_state.messages.append({"role": "user",  avatar : "🧑" , "content": prompt})
     with st.chat_message("user", avatar= "🧑"):
         st.write(prompt)
 

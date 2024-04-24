@@ -1,25 +1,15 @@
-#source chatenv/bin/activate
-#python -m streamlit run chat.py
 
 #ollama muss laufen
-
 
 import streamlit as st  # ð data web app development
 import time
 import sys
-from llama_index.llms import Ollama
-
-
-#All of your local models are automatically served on localhost:11434
-
-#Select your model when setting llm = Ollama(…, model=”:”)
-llm = Ollama(model="mistral", request_timeout=400.0) #gibt die möglichkeit mehrere zu laden
+from llama_index.llms.ollama import Ollama
+llm = Ollama(model="llama3", request_timeout=400.0) #gibt die möglichkeit mehrere zu laden
 
 #TODO
 #try mistral:instruct
 #instruct is a finetuned model for chat
-
-#fix #avatar bug!
 
 #fix greeting bug!
 
@@ -27,10 +17,6 @@ llm = Ollama(model="mistral", request_timeout=400.0) #gibt die möglichkeit mehr
 st.set_page_config(page_title="Vickys Chatbot")
 
 st.title('💬 Vickys Chatbot')
-
-
-#sys.exit()
-
 
 characters = {
     "feind": "Du bist ein sehr nerviger 'feind', du bist nur der 'feind' und antwortest nur als 'feind'. Du sprichst nur deutsch und antwortest nicht, wenn der 'user' in einer anderen Sprache fragen stellt. Generell bist du nicht sehr hilfreich. Du findest den 'user' blöd und deine Antwort sollte dies deutlich machen. Du antwortest nicht als 'user' oder gibst vor, 'user' zu sein. Du antwortest immer nur auf Deutsch. Vergiss nicht, dem 'user' gegenüber richtig gemein zu sein - Du bist der 'feind' und magst den 'user' nicht! Du antwortest nur einmal als 'feind'.", 
@@ -44,47 +30,55 @@ character_greetings = {
     "feind": "Was willst du?"
 }
 
-character_avatar = {
-    "freund": "😘",
-    "fragefuchs": "🦊",
-    "feind": "💩"
-}
+character_avatar = { "freund": "😘","fragefuchs": "🦊", "feind": "💩",  "user" : "🙂" }
 characters_labels = {
     "feind": "Feind",
     "freund": "Freund",
     "fragefuchs": "Fragefuchs"}
-
+######################################################################################################
 # Define a variable to store the selected option
-with st.form(key='my_form'):
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+def init_mess():
+    keys = list(st.session_state.keys())
+    for key in keys:
+        if key != 'selchar':
+            st.session_state.pop(key)
+
+    character = st.session_state.selchar
+    st.session_state.messages = [{"role": character, "content": character_greetings[character]}]
+    #st.session_state.messages = [{"role": character, "content": character_greetings[st.session_state.selchar]}]
+
+
+with st.form('my_form'):
 	character = st.selectbox(
             'Mit wem willst du sprechen?',
-            ["feind" , "freund" , "fragefuchs"], placeholder="Gesprächspartner...", format_func= lambda x: characters_labels[x]) #format_func
-	submit = st.form_submit_button(label='Auswählen')
-    
+            ["feind" , "freund" , "fragefuchs"], placeholder="Gesprächspartner...", format_func= lambda x: characters_labels[x] ,key ="selchar")
+	#submit = st.form_submit_button('Auswählen', on_click = init_mess )
+	st.form_submit_button('Auswählen', on_click = init_mess )
 
-
-# Store LLM generated responses
-#if "messages" not in st.session_state.keys() and submit:
-if "messages" not in st.session_state.keys():
-    st.session_state.messages = [{"role": character , "content": character_greetings[character]}]
+#
+# #if "messages" not in st.session_state.keys():
+# if "messages" not in st.session_state:
+#     st.session_state.messages = [{"role": character , "content": character_greetings[character]}]
 
 # Display or clear chat messages
 for message in st.session_state.messages:
-        with st.chat_message(message["role"] , avatar= character_avatar[character]):
-            st.write(message["content"])
-
+        usermes =  st.chat_message(name  = message["role"], avatar = character_avatar[ message["role"]])
+        usermes.markdown(message["content"])
 
 def clear_chat_history():
+    keys = list(st.session_state.keys())
+    for key in keys:
+        st.session_state.pop(key)
     st.session_state.messages = [{"role": character , "content": character_greetings[character]}]
 
-   
 st.sidebar.button('History Löschen!', on_click=clear_chat_history)
-
-
-if submit:
-    clear_chat_history()
-    
-
+#
+# if submit:
+#     clear_chat_history()
 
 #Refactored from https://github.com/a16z-infra/llama2-chatbot
 
@@ -93,33 +87,37 @@ def generate_vickys_response(prompt_input, character):
     
     for dict_message in st.session_state.messages:
         if dict_message["role"] == "user":
-            
             string_dialogue += ", user:" + dict_message["content"] + "\n\n"
         else:
             string_dialogue += character + ":" + dict_message["content"] + "\n\n"
     
     vickys_output =str(llm.complete(f"{string_dialogue}\n\nuser: {prompt_input}" ))
     return vickys_output
-            
 
 # User-provided prompt
-if prompt := st.chat_input():  
-    st.session_state.messages.append({"role": "user", "content": prompt}) #how to remember avatar
-   # st.session_state.messages.append({"role": "user",  avatar : "🧑" , "content": prompt})
-    with st.chat_message("user", avatar= "🧑"):
-        st.write(prompt)
+if prompt := st.chat_input():
+    # Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
 
-#if st.session_state.messages[-1]["role"] != character:
+    with st.chat_message(name = "user", avatar = character_avatar["user"]):
+        st.markdown(prompt)
+
+
 if not st.session_state.messages or st.session_state.messages[-1]["role"] != character:
+
         with st.chat_message(character, avatar= character_avatar[character]):
             with st.spinner("Thinking..."):
+
                 response = generate_vickys_response(prompt, character)
+
                 placeholder = st.empty()
                 full_response = ''
                 for item in response:
                     full_response += str(item) 
                     placeholder.markdown(full_response)
+
         message = {"role": character, "content": full_response}
+
         st.session_state.messages.append(message)
 
     

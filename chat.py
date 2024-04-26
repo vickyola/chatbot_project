@@ -1,4 +1,3 @@
-
 #ollama muss laufen
 
 import streamlit as st  # ð data web app development
@@ -9,9 +8,6 @@ llm = Ollama(model="llama3", request_timeout=400.0) #gibt die möglichkeit mehre
 
 #TODO
 #try mistral:instruct
-#instruct is a finetuned model for chat
-
-#fix greeting bug!
 
 # App title
 st.set_page_config(page_title="Vickys Chatbot")
@@ -20,12 +16,12 @@ st.title('💬 Vickys Chatbot')
 
 characters = {
     "feind": "Du bist ein sehr nerviger 'feind', du bist nur der 'feind' und antwortest nur als 'feind'. Du sprichst nur deutsch und antwortest nicht, wenn der 'user' in einer anderen Sprache fragen stellt. Generell bist du nicht sehr hilfreich. Du findest den 'user' blöd und deine Antwort sollte dies deutlich machen. Du antwortest nicht als 'user' oder gibst vor, 'user' zu sein. Du antwortest immer nur auf Deutsch. Vergiss nicht, dem 'user' gegenüber richtig gemein zu sein - Du bist der 'feind' und magst den 'user' nicht! Du antwortest nur einmal als 'feind'.", 
-    "freund": "Du bist der lustige 'freund', du beantwortest Fragen nur in kurzen deutschen Sätzen als 'freund'. Deine Aufgabe ist es, den Nutzern ein Lächeln ins Gesicht zu zaubern und ihren Tag zum Lachen zu bringen. Denke daran, dass du der 'freund' bist und nicht der 'user'. Reagiere nicht als 'user' und gebe niemals vor, 'user' zu sein. Sie antworten immer nur als 'freund' und auf Deutsch. Du bist der 'freund'.",
+    "freund": "Du bist der lustige 'freund', du beantwortest Fragen nur in kurzen deutschen Sätzen als 'freund'. Deine Aufgabe ist es, den Nutzern ein Lächeln ins Gesicht zu zaubern und ihn zum Lachen zu bringen. In jeder deiner Antworten baust du ein Kompliment ein. Denke daran, dass du der 'freund' bist und nicht der 'user'. Reagiere nicht als 'user' und gebe niemals vor, 'user' zu sein. Du antwortest immer nur als 'freund' und auf Deutsch. Du bist der 'freund'.",
     "fragefuchs" : "Du bist der 'fragefuchs'. Beantworte Frage immer mit einer weiteren Frage, um die Frage zu präzisieren. Dein Ziel ist es, herauszufinden, was der 'user' möchte. Sie sollten niemals eine Frage beantworten, sondern immer eine Frage auf Deutsch stellen, die auf der Frage basiert, die Ihnen gestellt wurde. Denke daran, dass du der 'fragefuchs' bist, nicht der  'user' . Reagieren  nicht als  'user'  und  geben  niemals vor,  'user'  zu sein. Du bist der 'fragefuchs'. "}
     
     
 character_greetings = {
-    "freund": "Hey, ich bin dein lustiger Freund! Lass uns zusammen eine gute Zeit haben.",
+    "freund": "Hey, ich bin dein Freund! Lass uns zusammen eine gute Zeit haben.",
     "fragefuchs": "Hallo! Stell mir eine Frage ich beantworte sie bestimmt!",
     "feind": "Was willst du?"
 }
@@ -37,32 +33,19 @@ characters_labels = {
     "fragefuchs": "Fragefuchs"}
 ######################################################################################################
 # Define a variable to store the selected option
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
 def init_mess():
     keys = list(st.session_state.keys())
     for key in keys:
         if key != 'selchar':
             st.session_state.pop(key)
+    st.session_state.messages = [{"role": st.session_state.selchar, "content": character_greetings[st.session_state.selchar]}]
 
-    character = st.session_state.selchar
-    st.session_state.messages = [{"role": character, "content": character_greetings[character]}]
-    #st.session_state.messages = [{"role": character, "content": character_greetings[st.session_state.selchar]}]
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-
-with st.form('my_form'):
-	character = st.selectbox(
-            'Mit wem willst du sprechen?',
-            ["feind" , "freund" , "fragefuchs"], placeholder="Gesprächspartner...", format_func= lambda x: characters_labels[x] ,key ="selchar")
-	#submit = st.form_submit_button('Auswählen', on_click = init_mess )
-	st.form_submit_button('Auswählen', on_click = init_mess )
-
-#
-# #if "messages" not in st.session_state.keys():
-# if "messages" not in st.session_state:
-#     st.session_state.messages = [{"role": character , "content": character_greetings[character]}]
+character = st.selectbox(
+        'Mit wem willst du sprechen?',
+        ["feind" , "freund" , "fragefuchs"], placeholder="Gesprächspartner...", format_func= lambda x: characters_labels[x] ,on_change=init_mess, key ="selchar")
 
 # Display or clear chat messages
 for message in st.session_state.messages:
@@ -72,7 +55,8 @@ for message in st.session_state.messages:
 def clear_chat_history():
     keys = list(st.session_state.keys())
     for key in keys:
-        st.session_state.pop(key)
+        if key != 'selchar':
+            st.session_state.pop(key)
     st.session_state.messages = [{"role": character , "content": character_greetings[character]}]
 
 st.sidebar.button('History Löschen!', on_click=clear_chat_history)
@@ -92,6 +76,8 @@ def generate_vickys_response(prompt_input, character):
             string_dialogue += character + ":" + dict_message["content"] + "\n\n"
     
     vickys_output =str(llm.complete(f"{string_dialogue}\n\nuser: {prompt_input}" ))
+    #llm.complete
+
     return vickys_output
 
 # User-provided prompt

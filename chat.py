@@ -45,10 +45,13 @@ if "messages" not in st.session_state:
 
 character = st.selectbox(
         'Mit wem willst du sprechen?',
-        ["feind" , "freund" , "fragefuchs"], placeholder="Gesprächspartner...", format_func= lambda x: characters_labels[x] ,on_change=init_mess, key ="selchar")
+        ["feind" , "freund" , "fragefuchs"], index = None, placeholder="Gesprächspartner...", format_func= lambda x: characters_labels[x] ,on_change=init_mess, key ="selchar")
 
+#selchar
+
+if character in ["feind" , "freund" , "fragefuchs"]:
 # Display or clear chat messages
-for message in st.session_state.messages:
+    for message in st.session_state.messages:
         usermes =  st.chat_message(name  = message["role"], avatar = character_avatar[ message["role"]])
         usermes.markdown(message["content"])
 
@@ -57,12 +60,10 @@ def clear_chat_history():
     for key in keys:
         if key != 'selchar':
             st.session_state.pop(key)
-    st.session_state.messages = [{"role": character , "content": character_greetings[character]}]
+    #st.session_state.messages = [{"role": character , "content": character_greetings[character]}]
+    st.session_state.messages = []
 
 st.sidebar.button('History Löschen!', on_click=clear_chat_history)
-#
-# if submit:
-#     clear_chat_history()
 
 #Refactored from https://github.com/a16z-infra/llama2-chatbot
 
@@ -76,7 +77,7 @@ def generate_vickys_response(prompt_input, character):
             string_dialogue += character + ":" + dict_message["content"] + "\n\n"
     
     vickys_output =str(llm.complete(f"{string_dialogue}\n\nuser: {prompt_input}" ))
-    #llm.complete
+
 
     return vickys_output
 
@@ -89,7 +90,7 @@ if prompt := st.chat_input():
         st.markdown(prompt)
 
 
-if not st.session_state.messages or st.session_state.messages[-1]["role"] != character:
+    if not st.session_state.messages or st.session_state.messages[-1]["role"] != character:
 
         with st.chat_message(character, avatar= character_avatar[character]):
             with st.spinner("Thinking..."):
@@ -99,7 +100,7 @@ if not st.session_state.messages or st.session_state.messages[-1]["role"] != cha
                 placeholder = st.empty()
                 full_response = ''
                 for item in response:
-                    full_response += str(item) 
+                    full_response += str(item)
                     placeholder.markdown(full_response)
 
         message = {"role": character, "content": full_response}

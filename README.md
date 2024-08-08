@@ -54,7 +54,6 @@ Vicky's Chatbot is an interactive web application built using Streamlit, designe
 
 ### Switching Models
 If you want to try a different model, such as `mistral:instruct`, modify the following line in the code:
-```python
 llm = Ollama(model="mistral:instruct", request_timeout=400.0)
 
 

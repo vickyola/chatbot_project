@@ -41,7 +41,7 @@ Vicky's Chatbot is an interactive web application built using Streamlit, designe
 
 1. **Run the Streamlit app**:
     ```bash
-    streamlit run app.py
+    streamlit run chat.py
     ```
 
 2. **Select a Character**: Choose one of the characters (Feind, Freund, or Fragefuchs) from the dropdown menu.
